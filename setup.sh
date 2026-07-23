@@ -68,7 +68,7 @@ check_update() {
 }
 
 check_packages() {
-  local pkgs=(neovim curl git openssh stow bat which)
+  local pkgs=(neovim curl git openssh stow bat which eza tmux fzf zoxide)
   local installed=()
   local missing=()
   for pkg in "${pkgs[@]}"; do
@@ -98,6 +98,21 @@ check_ssh() {
   fi
 }
 
+check_stow() {
+  local stowed=true
+  if [ ! -L "$HOME/.bashrc" ]; then
+    stowed=false
+  fi
+  if [ ! -L "$HOME/.termux/termux.properties" ]; then
+    stowed=false
+  fi
+  if [ "$stowed" = true ]; then
+    echo -e "  [Dotfiles]  ${GREEN}✓ Stowed${RESET}"
+  else
+    echo -e "  [Dotfiles]  ${YELLOW}✗ Not stowed${RESET}"
+  fi
+}
+
 # -----------------------------------------------
 # Menu
 # -----------------------------------------------
@@ -110,7 +125,8 @@ show_menu() {
   echo "  3) Update system packages"
   echo "  4) Install core packages"
   echo "  5) Setup SSH key"
-  echo "  6) Run all"
+  echo "  6) Stow dotfiles"
+  echo "  7) Run all"
   separator
   echo -n "Choice (e.g., 1 3 4): "
 }
@@ -184,7 +200,7 @@ run_update() {
 }
 
 run_packages() {
-  local pkgs=(neovim curl git openssh stow bat)
+  local pkgs=(neovim curl git openssh stow bat which eza tmux fzf zoxide)
   local already=()
   local installed=()
 
@@ -228,6 +244,28 @@ run_ssh() {
   separator
 }
 
+run_stow() {
+  local stowed=true
+  if [ ! -L "$HOME/.bashrc" ]; then
+    stowed=false
+  fi
+  if [ ! -L "$HOME/.termux/termux.properties" ]; then
+    stowed=false
+  fi
+
+  if [ "$stowed" = true ]; then
+    step_msg "Dotfiles already stowed — restowing..."
+    stow -R .
+    termux-reload-settings
+    done_msg "Dotfiles restowed"
+  else
+    step_msg "Stowing dotfiles..."
+    stow .
+    termux-reload-settings
+    done_msg "Dotfiles stowed"
+  fi
+}
+
 # -----------------------------------------------
 # Main
 # -----------------------------------------------
@@ -243,6 +281,7 @@ main() {
   check_update
   check_packages
   check_ssh
+  check_stow
   echo ""
 
   # --- Menu ---
@@ -251,14 +290,14 @@ main() {
 
   # --- Build step list ---
   steps=()
-  if [[ "$choices" == "6" ]] || [[ "$choices" == "all" ]]; then
-    steps=(1 2 3 4 5)
+  if [[ "$choices" == "7" ]] || [[ "$choices" == "all" ]]; then
+    steps=(1 2 3 4 5 6)
   else
     for choice in $choices; do
       case "$choice" in
-      1 | 2 | 3 | 4 | 5) add_step "$choice" ;;
-      6 | all)
-        steps=(1 2 3 4 5)
+      1 | 2 | 3 | 4 | 5 | 6) add_step "$choice" ;;
+      7 | all)
+        steps=(1 2 3 4 5 6)
         break
         ;;
       *) echo -e "${YELLOW}Unknown step: $choice — ignoring${RESET}" ;;
@@ -296,6 +335,10 @@ main() {
     5)
       step_num=$((step_num + 1))
       run_ssh
+      ;;
+    6)
+      step_num=$((step_num + 1))
+      run_stow
       ;;
     *) echo -e "${YELLOW}Unknown step: $step — skipping${RESET}" ;;
     esac
