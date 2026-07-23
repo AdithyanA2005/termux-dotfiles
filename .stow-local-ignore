@@ -1,5 +1,7 @@
 ^\.git$
 ^setup\.sh$
 ^\.stow-local-ignore$
+^README\.md$
+^AGENTS\.md$
 ^fonts$
 ^themes$
