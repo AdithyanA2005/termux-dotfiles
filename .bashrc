@@ -28,14 +28,47 @@ bind 'Space:magic-space'
 set -o vi
 
 # ─────────────────────────────────────────────
-# 3. Safer defaults
+# 3. Startup banner (reads theme color)
+# ─────────────────────────────────────────────
+__banner_get_theme_color() {
+    local theme_file="$HOME/.termux/colors.properties"
+    if [ -f "$theme_file" ]; then
+        local fg=$(grep -E '^foreground' "$theme_file" | head -1 | cut -d'#' -f2)
+        [ -n "$fg" ] && { echo "#$fg"; return; }
+        local c12=$(grep -E '^color12' "$theme_file" | head -1 | cut -d'#' -f2)
+        [ -n "$c12" ] && { echo "#$c12"; return; }
+    fi
+    echo "#00d7ff"
+}
+
+__show_banner() {
+    local hex="$(__banner_get_theme_color)"
+    hex="${hex#\#}"
+    local r=$((16#${hex:0:2}))
+    local g=$((16#${hex:2:2}))
+    local b=$((16#${hex:4:2}))
+
+    printf '\033[38;2;%d;%d;%dm' "$r" "$g" "$b"
+    printf '%s\n' ' ██████╗  █████╗ ██╗      █████╗ ██╗  ██╗██╗   ██╗'
+    printf '%s\n' '██╔════╝ ██╔══██╗██║     ██╔══██╗╚██╗██╔╝╚██╗ ██╔╝'
+    printf '%s\n' '██║  ███╗███████║██║     ███████║ ╚███╔╝  ╚████╔╝'
+    printf '%s\n' '██║   ██║██╔══██║██║     ██╔══██║ ██╔██╗   ╚██╔╝'
+    printf '%s\n' '╚██████╔╝██║  ██║███████╗██║  ██║██╔╝ ██╗   ██║'
+    printf '%s\033[0m\n' ' ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝'
+}
+
+__show_banner
+unset -f __show_banner __banner_get_theme_color
+
+# ─────────────────────────────────────────────
+# 4. Safer defaults
 # ─────────────────────────────────────────────
 alias rm='rm -i'
 alias cp='cp -i'
 alias mv='mv -i'
 
 # ─────────────────────────────────────────────
-# 4. Core aliases (eza, grep, navigation)
+# 5. Core aliases (eza, grep, navigation)
 # ─────────────────────────────────────────────
 alias ls='eza --color=auto --group-directories-first --icons=auto'
 alias ll='eza -l --color=auto --group-directories-first --icons=auto --header --git'
@@ -58,21 +91,21 @@ alias mem='free -h'
 alias dfh='df -h'
 
 # ─────────────────────────────────────────────
-# 5. Tmux
+# 6. Tmux
 # ─────────────────────────────────────────────
 alias t='tmux'
 alias ta='tmux attach'
 alias ts='tmux new-session -s'
 
 # ─────────────────────────────────────────────
-# 9. Application shortcuts
+# 7. Application shortcuts
 # ─────────────────────────────────────────────
 alias v='nvim'
 alias vz='fzf --multi --bind "enter:become(nvim {+})" --preview="bat --color=always {}"'
 
 
 # ─────────────────────────────────────────────
-# 11. Prompt helpers
+# 8. Prompt helpers
 # ─────────────────────────────────────────────
 RESET="\e[0m"
 RED="\e[31m"
@@ -92,7 +125,7 @@ prompt_status() {
 export PS1='$(prompt_status) \[\e[34m\]\u@\h\[\e[0m\]:\[\e[36m\]\w\[\e[0m\]\$ '
 
 # ─────────────────────────────────────────────
-# 12. Ctrl+O clear screen
+# 9. Ctrl+O clear screen
 # ─────────────────────────────────────────────
 bind '"\C-o": clear-screen'
 
