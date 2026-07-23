@@ -2,3 +2,4 @@
 ^setup\.sh$
 ^\.stow-local-ignore$
 ^fonts$
+^themes$

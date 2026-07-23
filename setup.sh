@@ -121,6 +121,14 @@ check_font() {
   fi
 }
 
+check_theme() {
+  if [ -f "$HOME/.termux/colors.properties" ]; then
+    echo -e "  [Theme]     ${GREEN}✓ Set${RESET}"
+  else
+    echo -e "  [Theme]     ${YELLOW}✗ Not set${RESET}"
+  fi
+}
+
 # -----------------------------------------------
 # Menu
 # -----------------------------------------------
@@ -135,7 +143,8 @@ show_menu() {
   echo "  5) Setup SSH key"
   echo "  6) Stow dotfiles"
   echo "  7) Set terminal font"
-  echo "  8) Run all"
+  echo "  8) Set terminal theme"
+  echo "  9) Run all"
   separator
   echo -n "Choice (e.g., 1 3 4): "
 }
@@ -314,6 +323,53 @@ run_font() {
   done_msg "Font set to $font_file"
 }
 
+run_theme() {
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local themes_dir="$script_dir/themes"
+
+  if [ ! -d "$themes_dir" ]; then
+    echo -e "${YELLOW}  themes/ directory not found in repo${RESET}"
+    return 1
+  fi
+
+  step_msg "Select a color theme:"
+  echo ""
+  echo "    1) Dracula"
+  echo "    2) Catppuccin Mocha"
+  echo "    3) Nord"
+  echo "    4) Tokyo Night"
+  echo "    5) Gruvbox Dark"
+  echo "    6) OneDark"
+  echo ""
+  read -rp "  Choice (1-6): " theme_choice
+
+  local theme_file=""
+  case "$theme_choice" in
+    1) theme_file="dracula.properties" ;;
+    2) theme_file="catppuccin-mocha.properties" ;;
+    3) theme_file="nord.properties" ;;
+    4) theme_file="tokyo-night.properties" ;;
+    5) theme_file="gruvbox-dark.properties" ;;
+    6) theme_file="onedark.properties" ;;
+    *)
+      echo -e "${YELLOW}  Invalid choice — skipping${RESET}"
+      return 1
+      ;;
+  esac
+
+  local src="$themes_dir/$theme_file"
+  if [ ! -f "$src" ]; then
+    echo -e "${YELLOW}  Theme file not found: $src${RESET}"
+    return 1
+  fi
+
+  mkdir -p "$HOME/.termux"
+  cp "$src" "$HOME/.termux/colors.properties"
+  termux-reload-settings
+  done_msg "Theme set to $theme_file"
+}
+
 # -----------------------------------------------
 # Main
 # -----------------------------------------------
@@ -331,6 +387,7 @@ main() {
   check_ssh
   check_stow
   check_font
+  check_theme
   echo ""
 
   # --- Menu ---
@@ -339,14 +396,14 @@ main() {
 
   # --- Build step list ---
   steps=()
-  if [[ "$choices" == "8" ]] || [[ "$choices" == "all" ]]; then
-    steps=(1 2 3 4 5 6 7)
+  if [[ "$choices" == "9" ]] || [[ "$choices" == "all" ]]; then
+    steps=(1 2 3 4 5 6 7 8)
   else
     for choice in $choices; do
       case "$choice" in
-      1 | 2 | 3 | 4 | 5 | 6 | 7) add_step "$choice" ;;
-      8 | all)
-        steps=(1 2 3 4 5 6 7)
+      1 | 2 | 3 | 4 | 5 | 6 | 7 | 8) add_step "$choice" ;;
+      9 | all)
+        steps=(1 2 3 4 5 6 7 8)
         break
         ;;
       *) echo -e "${YELLOW}Unknown step: $choice — ignoring${RESET}" ;;
@@ -392,6 +449,10 @@ main() {
     7)
       step_num=$((step_num + 1))
       run_font
+      ;;
+    8)
+      step_num=$((step_num + 1))
+      run_theme
       ;;
     *) echo -e "${YELLOW}Unknown step: $step — skipping${RESET}" ;;
     esac
