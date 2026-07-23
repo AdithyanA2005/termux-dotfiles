@@ -113,6 +113,14 @@ check_stow() {
   fi
 }
 
+check_font() {
+  if [ -f "$HOME/.termux/font.ttf" ]; then
+    echo -e "  [Font]      ${GREEN}✓ Set${RESET}"
+  else
+    echo -e "  [Font]      ${YELLOW}✗ Not set${RESET}"
+  fi
+}
+
 # -----------------------------------------------
 # Menu
 # -----------------------------------------------
@@ -126,7 +134,8 @@ show_menu() {
   echo "  4) Install core packages"
   echo "  5) Setup SSH key"
   echo "  6) Stow dotfiles"
-  echo "  7) Run all"
+  echo "  7) Set terminal font"
+  echo "  8) Run all"
   separator
   echo -n "Choice (e.g., 1 3 4): "
 }
@@ -266,6 +275,45 @@ run_stow() {
   fi
 }
 
+run_font() {
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local fonts_dir="$script_dir/fonts"
+
+  if [ ! -d "$fonts_dir" ]; then
+    echo -e "${YELLOW}  fonts/ directory not found in repo${RESET}"
+    return 1
+  fi
+
+  step_msg "Select a nerd font:"
+  echo ""
+  echo "    1) JetBrainsMono"
+  echo "    2) FiraCode"
+  echo ""
+  read -rp "  Choice (1 or 2): " font_choice
+
+  local font_file=""
+  case "$font_choice" in
+    1) font_file="JetBrainsMono.ttf" ;;
+    2) font_file="FiraCode.ttf" ;;
+    *)
+      echo -e "${YELLOW}  Invalid choice — skipping${RESET}"
+      return 1
+      ;;
+  esac
+
+  local src="$fonts_dir/$font_file"
+  if [ ! -f "$src" ]; then
+    echo -e "${YELLOW}  Font file not found: $src${RESET}"
+    return 1
+  fi
+
+  mkdir -p "$HOME/.termux"
+  cp "$src" "$HOME/.termux/font.ttf"
+  termux-reload-settings
+  done_msg "Font set to $font_file"
+}
+
 # -----------------------------------------------
 # Main
 # -----------------------------------------------
@@ -282,6 +330,7 @@ main() {
   check_packages
   check_ssh
   check_stow
+  check_font
   echo ""
 
   # --- Menu ---
@@ -290,14 +339,14 @@ main() {
 
   # --- Build step list ---
   steps=()
-  if [[ "$choices" == "7" ]] || [[ "$choices" == "all" ]]; then
-    steps=(1 2 3 4 5 6)
+  if [[ "$choices" == "8" ]] || [[ "$choices" == "all" ]]; then
+    steps=(1 2 3 4 5 6 7)
   else
     for choice in $choices; do
       case "$choice" in
-      1 | 2 | 3 | 4 | 5 | 6) add_step "$choice" ;;
-      7 | all)
-        steps=(1 2 3 4 5 6)
+      1 | 2 | 3 | 4 | 5 | 6 | 7) add_step "$choice" ;;
+      8 | all)
+        steps=(1 2 3 4 5 6 7)
         break
         ;;
       *) echo -e "${YELLOW}Unknown step: $choice — ignoring${RESET}" ;;
@@ -339,6 +388,10 @@ main() {
     6)
       step_num=$((step_num + 1))
       run_stow
+      ;;
+    7)
+      step_num=$((step_num + 1))
+      run_font
       ;;
     *) echo -e "${YELLOW}Unknown step: $step — skipping${RESET}" ;;
     esac
