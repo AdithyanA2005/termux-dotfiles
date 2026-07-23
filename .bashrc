@@ -28,37 +28,16 @@ bind 'Space:magic-space'
 set -o vi
 
 # ─────────────────────────────────────────────
-# 3. Startup banner (reads theme color)
+# 3. Startup banner
 # ─────────────────────────────────────────────
-__banner_get_theme_color() {
-    local theme_file="$HOME/.termux/colors.properties"
-    if [ -f "$theme_file" ]; then
-        local fg=$(grep -E '^foreground' "$theme_file" | head -1 | cut -d'#' -f2)
-        [ -n "$fg" ] && { echo "#$fg"; return; }
-        local c12=$(grep -E '^color12' "$theme_file" | head -1 | cut -d'#' -f2)
-        [ -n "$c12" ] && { echo "#$c12"; return; }
-    fi
-    echo "#00d7ff"
-}
-
-__show_banner() {
-    local hex="$(__banner_get_theme_color)"
-    hex="${hex#\#}"
-    local r=$((16#${hex:0:2}))
-    local g=$((16#${hex:2:2}))
-    local b=$((16#${hex:4:2}))
-
-    printf '\033[38;2;%d;%d;%dm' "$r" "$g" "$b"
-    printf '%s\n' ' ██████╗  █████╗ ██╗      █████╗ ██╗  ██╗██╗   ██╗'
-    printf '%s\n' '██╔════╝ ██╔══██╗██║     ██╔══██╗╚██╗██╔╝╚██╗ ██╔╝'
-    printf '%s\n' '██║  ███╗███████║██║     ███████║ ╚███╔╝  ╚████╔╝'
-    printf '%s\n' '██║   ██║██╔══██║██║     ██╔══██║ ██╔██╗   ╚██╔╝'
-    printf '%s\n' '╚██████╔╝██║  ██║███████╗██║  ██║██╔╝ ██╗   ██║'
-    printf '%s\033[0m\n' ' ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝'
-}
-
-__show_banner
-unset -f __show_banner __banner_get_theme_color
+echo ""
+printf '\033[1;36m%s\033[0m\n' ' ██████╗  █████╗ ██╗      █████╗ ██╗  ██╗██╗   ██╗'
+printf '\033[1;36m%s\033[0m\n' '██╔════╝ ██╔══██╗██║     ██╔══██╗╚██╗██╔╝╚██╗ ██╔╝'
+printf '\033[1;36m%s\033[0m\n' '██║  ███╗███████║██║     ███████║ ╚███╔╝  ╚████╔╝'
+printf '\033[1;36m%s\033[0m\n' '██║   ██║██╔══██║██║     ██╔══██║ ██╔██╗   ╚██╔╝'
+printf '\033[1;36m%s\033[0m\n' '╚██████╔╝██║  ██║███████╗██║  ██║██╔╝ ██╗   ██║'
+printf '\033[1;36m%s\033[0m\n' ' ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝'
+echo ""
 
 # ─────────────────────────────────────────────
 # 4. Safer defaults
