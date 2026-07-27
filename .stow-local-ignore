@@ -5,3 +5,6 @@
 ^AGENTS\.md$
 ^fonts$
 ^themes$
+^figlet-fonts$
+^ascii_art\.txt$
+^\.gitignore$

@@ -68,7 +68,7 @@ check_update() {
 }
 
 check_packages() {
-  local pkgs=(neovim curl git openssh stow bat which eza tmux fzf zoxide)
+  local pkgs=(neovim curl git openssh stow bat which eza tmux fzf zoxide figlet)
   local installed=()
   local missing=()
   for pkg in "${pkgs[@]}"; do
@@ -129,6 +129,14 @@ check_theme() {
   fi
 }
 
+check_ascii() {
+  if [ -f "$HOME/.termux/ascii_art.txt" ]; then
+    echo -e "  [ASCII]     ${GREEN}✓ Set${RESET}"
+  else
+    echo -e "  [ASCII]     ${YELLOW}✗ Not set${RESET}"
+  fi
+}
+
 # -----------------------------------------------
 # Menu
 # -----------------------------------------------
@@ -144,7 +152,8 @@ show_menu() {
   echo "  6) Stow dotfiles"
   echo "  7) Set terminal font"
   echo "  8) Set terminal theme"
-  echo "  9) Run all"
+  echo "  9) Generate ASCII banner"
+  echo "  10) Run all"
   separator
   echo -n "Choice (e.g., 1 3 4): "
 }
@@ -218,7 +227,7 @@ run_update() {
 }
 
 run_packages() {
-  local pkgs=(neovim curl git openssh stow bat which eza tmux fzf zoxide)
+  local pkgs=(neovim curl git openssh stow bat which eza tmux fzf zoxide figlet)
   local already=()
   local installed=()
 
@@ -370,6 +379,41 @@ run_theme() {
   done_msg "Theme set to $theme_file"
 }
 
+run_ascii() {
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local font_file="$script_dir/figlet-fonts/ansi-shadow.flf"
+  local art_file="$HOME/.termux/ascii_art.txt"
+
+  if [ ! -f "$font_file" ]; then
+    echo -e "${YELLOW}  Figlet font not found: $font_file${RESET}"
+    return 1
+  fi
+
+  step_msg "Enter text for ASCII banner (empty = disable banner):"
+  read -rp "  Text: " ascii_text
+
+  mkdir -p "$HOME/.termux"
+
+  if [ -z "$ascii_text" ]; then
+    if [ -f "$art_file" ]; then
+      rm "$art_file"
+      done_msg "ASCII banner disabled (file deleted)"
+    else
+      skipped_msg "No ASCII banner to remove"
+    fi
+    return 0
+  fi
+
+  if ! command -v figlet >/dev/null 2>&1; then
+    echo -e "${YELLOW}  figlet not installed — installing...${RESET}"
+    pkg install -y figlet
+  fi
+
+  figlet -f "$font_file" "$ascii_text" > "$art_file"
+  done_msg "ASCII banner set to: $ascii_text"
+}
+
 # -----------------------------------------------
 # Main
 # -----------------------------------------------
@@ -388,6 +432,7 @@ main() {
   check_stow
   check_font
   check_theme
+  check_ascii
   echo ""
 
   # --- Menu ---
@@ -396,14 +441,14 @@ main() {
 
   # --- Build step list ---
   steps=()
-  if [[ "$choices" == "9" ]] || [[ "$choices" == "all" ]]; then
-    steps=(1 2 3 4 5 6 7 8)
+  if [[ "$choices" == "10" ]] || [[ "$choices" == "all" ]]; then
+    steps=(1 2 3 4 5 6 7 8 9)
   else
     for choice in $choices; do
       case "$choice" in
-      1 | 2 | 3 | 4 | 5 | 6 | 7 | 8) add_step "$choice" ;;
-      9 | all)
-        steps=(1 2 3 4 5 6 7 8)
+      1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9) add_step "$choice" ;;
+      10 | all)
+        steps=(1 2 3 4 5 6 7 8 9)
         break
         ;;
       *) echo -e "${YELLOW}Unknown step: $choice — ignoring${RESET}" ;;
@@ -453,6 +498,10 @@ main() {
     8)
       step_num=$((step_num + 1))
       run_theme
+      ;;
+    9)
+      step_num=$((step_num + 1))
+      run_ascii
       ;;
     *) echo -e "${YELLOW}Unknown step: $step — skipping${RESET}" ;;
     esac
